@@ -1,15 +1,19 @@
 package service
 
-var tweet string
+import (
+	"github.com/go.tuiter/src/domain"
+)
 
-func PublishTweet(newTweet string) {
+var tweet *domain.Tweet
+
+func PublishTweet(newTweet *domain.Tweet) {
 	tweet = newTweet
 }
 
-func GetTweet() string {
+func GetTweet() *domain.Tweet {
 	return tweet
 }
 
 func DeleteTweet() {
-	tweet = ""
+	tweet = nil
 }

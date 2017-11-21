@@ -53,7 +53,7 @@ func main() {
 
 			service.DeleteTweet()
 
-			c.Println("Tweet Deleted. \n")
+			c.Println("Tweet Deleted.\n")
 
 			return
 		},
