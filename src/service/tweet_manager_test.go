@@ -15,3 +15,15 @@ func TestPublishedTweetIsSaved(t *testing.T) {
 		t.Error("Expected tweet is", tweet)
 	}
 }
+
+func TestCleanTweetDeletesTweet(t *testing.T) {
+	tweet := "Tweet to be deleted"
+	service.PublishTweet(tweet)
+
+	service.DeleteTweet()
+
+	if service.GetTweet() != "" {
+		t.Error("Expected tweet is '' ")
+	}
+
+}
