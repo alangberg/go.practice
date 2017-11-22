@@ -8,18 +8,25 @@ import (
 
 var tweets []*domain.Tweet
 
-func PublishTweet(newTweet *domain.Tweet) error {
+func PublishTweet(newTweet *domain.Tweet) (int, error) {
 	if newTweet.User == "" {
-		return fmt.Errorf("user is required")
+		return 0, fmt.Errorf("user is required")
 	}
 	if newTweet.Text == "" {
-		return fmt.Errorf("text is required")
+		return 0, fmt.Errorf("text is required")
 	} else if len(newTweet.Text) > 140 {
-		return fmt.Errorf("text can not be longer than 140 characters")
+		return 0, fmt.Errorf("text can not be longer than 140 characters")
 	}
 
 	tweets = append(tweets, newTweet)
-	return nil
+	tweetId := TweetCount() - 1
+	newTweet.Id = tweetId
+
+	return tweetId, nil
+}
+
+func GetTweetById(id int) *domain.Tweet {
+	return tweets[id]
 }
 
 func GetTweets() []*domain.Tweet {

@@ -11,7 +11,7 @@ func printTweets(tweets []*domain.Tweet, c *ishell.Context) {
 		c.Println("No tweets to show :(")
 	} else {
 		for i := 0; i < len(tweets); i++ {
-			c.Println("Tweet ID:", i)
+			c.Println("Tweet ID:", tweets[i].Id)
 			c.Println("User:", tweets[i].User)
 			c.Println("Content:", tweets[i].Text)
 			c.Println("Date:", tweets[i].Date.Format("02-01-2006 15:04:05"))
@@ -22,7 +22,7 @@ func printTweets(tweets []*domain.Tweet, c *ishell.Context) {
 
 func main() {
 	shell := ishell.New()
-	shell.SetPrompt("Tuiter >> ")
+	shell.SetPrompt("Tuit3r >> ")
 	shell.Print("Type 'help' to know commands\n")
 
 	/*	shell.Print("Hello! Please enter your username:\n")
@@ -44,7 +44,7 @@ func main() {
 			text := c.ReadLine()
 			tweet := domain.NewTweet(user, text)
 
-			err := service.PublishTweet(tweet)
+			_, err := service.PublishTweet(tweet)
 
 			if err != nil {
 				c.Println(err.Error())

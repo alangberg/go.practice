@@ -7,11 +7,11 @@ import (
 	"github.com/alangberg/go.tuiter/src/service"
 )
 
-func isValidTweet(t *testing.T, tweet *domain.Tweet, user, text string) bool {
+func isValidTweet(t *testing.T, tweet *domain.Tweet, id int, user, text string) bool {
 
-	if tweet.User != user && tweet.Text != text {
-		t.Errorf("Expected tweet is %s: %s \nbut is %s: %s",
-			user, text, tweet.User, tweet.Text)
+	if tweet.User != user && tweet.Text != text && tweet.Id != id {
+		t.Errorf("Expected tweet: \n Id: %d \n, User: %s \n, Text: %s, \n but is \n Id: %d \n, User: %s \n, Text: %s \n",
+			id, user, text, tweet.Id, tweet.User, tweet.Text)
 		return false
 	}
 
@@ -30,12 +30,13 @@ func TestPublishedTweetIsSaved(t *testing.T) {
 	text := "This is my first tweet"
 	tweet := domain.NewTweet(user, text)
 
-	service.PublishTweet(tweet)
+	var tweetId int
+	tweetId, _ = service.PublishTweet(tweet)
 
 	publishedTweets := service.GetTweets()
 	publishedTweet := publishedTweets[0]
 
-	isValidTweet(t, publishedTweet, user, text)
+	isValidTweet(t, publishedTweet, tweetId, user, text)
 }
 
 func TestCleanTweetDeletesTweet(t *testing.T) {
@@ -60,7 +61,7 @@ func TestTweetWithoutUserIsNotPublished(t *testing.T) {
 	tweet := domain.NewTweet(user, text)
 
 	var err error
-	err = service.PublishTweet(tweet)
+	_, err = service.PublishTweet(tweet)
 
 	if err != nil && err.Error() != "user is required" {
 		t.Error("Expected error is user is required")
@@ -77,7 +78,7 @@ func TestCanNotPublishTweetWithoutText(t *testing.T) {
 	user := "grupoEsfera"
 	tweet := domain.NewTweet(user, text)
 
-	err := service.PublishTweet(tweet)
+	_, err := service.PublishTweet(tweet)
 
 	if err != nil && err.Error() != "text is required" {
 		t.Error("Expected error is text is required")
@@ -96,7 +97,7 @@ func TestCanNotPublishTweetsLongerThan140Characters(t *testing.T) {
 
 	tweet := domain.NewTweet(user, text)
 
-	err := service.PublishTweet(tweet)
+	_, err := service.PublishTweet(tweet)
 
 	if err == nil || err.Error() != "text can not be longer than 140 characters" {
 		t.Error("Expected error is text can not be longer than 140 characters")
@@ -120,9 +121,10 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 	tweet = domain.NewTweet(user, text)
 	secondTweet = domain.NewTweet(user, secondText)
 
+	var firstTweetId, secondTweetId int
 	// Operation
-	service.PublishTweet(tweet)
-	service.PublishTweet(secondTweet)
+	firstTweetId, _ = service.PublishTweet(tweet)
+	secondTweetId, _ = service.PublishTweet(secondTweet)
 
 	// Validation
 	publishedTweets := service.GetTweets()
@@ -136,12 +138,32 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 	firstPublishedTweet := publishedTweets[0]
 	secondPublishedTweet := publishedTweets[1]
 
-	if !isValidTweet(t, firstPublishedTweet, user, text) {
+	if !isValidTweet(t, firstPublishedTweet, firstTweetId, user, text) {
 		return
 	}
 
-	if !isValidTweet(t, secondPublishedTweet, user, secondText) {
+	if !isValidTweet(t, secondPublishedTweet, secondTweetId, user, secondText) {
 		return
 	}
 
+}
+
+func TestCanRetrieveTweetById(t *testing.T) {
+	// Initialization
+
+	var tweet *domain.Tweet
+	var id int
+
+	user := "grupoesfera"
+	text := "This is my first tweet"
+
+	tweet = domain.NewTweet(user, text)
+
+	// Operation
+	id, _ = service.PublishTweet(tweet)
+
+	// Validation
+	publishedTweet := service.GetTweetById(id)
+
+	isValidTweet(t, publishedTweet, id, user, text)
 }
