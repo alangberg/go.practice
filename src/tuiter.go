@@ -6,6 +6,20 @@ import (
 	"github.com/alangberg/go.tuiter/src/service"
 )
 
+func printTweets(tweets []*domain.Tweet, c *ishell.Context) {
+	if len(tweets) == 0 {
+		c.Println("No tweets to show :(")
+	} else {
+		for i := 0; i < len(tweets); i++ {
+			c.Println("Tweet ID:", i)
+			c.Println("User:", tweets[i].User)
+			c.Println("Content:", tweets[i].Text)
+			c.Println("Date:", tweets[i].Date.Format("02-01-2006 15:04:05"))
+			c.Println()
+		}
+	}
+}
+
 func main() {
 	shell := ishell.New()
 	shell.SetPrompt("Tuiter >> ")
@@ -42,32 +56,30 @@ func main() {
 	})
 
 	shell.AddCmd(&ishell.Cmd{
-		Name: "showTweet",
-		Help: "Shows a tweet",
+		Name: "showTweets",
+		Help: "Shows all tweets",
 		Func: func(c *ishell.Context) {
 
 			defer c.ShowPrompt(true)
 
-			tweet := service.GetTweet()
+			tweets := service.GetTweets()
 
-			c.Println("User:", tweet.User)
-			c.Println("Tweet:", tweet.Text)
-			c.Println("Date:", tweet.Date.Format("02-01-2006 15:04:05"))
+			printTweets(tweets, c)
 
 			return
 		},
 	})
 
 	shell.AddCmd(&ishell.Cmd{
-		Name: "deleteTweet",
-		Help: "Deletes a tweet",
+		Name: "deleteTweets",
+		Help: "Deletes all existing tweets",
 		Func: func(c *ishell.Context) {
 
 			defer c.ShowPrompt(true)
 
-			service.DeleteTweet()
+			service.DeleteTweets()
 
-			c.Println("Tweet Deleted.")
+			c.Println("Tweets Deleted.")
 
 			return
 		},

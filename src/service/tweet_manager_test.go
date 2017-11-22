@@ -7,6 +7,23 @@ import (
 	"github.com/alangberg/go.tuiter/src/service"
 )
 
+func isValidTweet(t *testing.T, tweet *domain.Tweet, user, text string) bool {
+
+	if tweet.User != user && tweet.Text != text {
+		t.Errorf("Expected tweet is %s: %s \nbut is %s: %s",
+			user, text, tweet.User, tweet.Text)
+		return false
+	}
+
+	if tweet.Date == nil {
+		t.Error("Expected date can't be nil")
+		return false
+	}
+
+	return true
+
+}
+
 func TestPublishedTweetIsSaved(t *testing.T) {
 
 	user := "grupoEsfera"
@@ -15,16 +32,10 @@ func TestPublishedTweetIsSaved(t *testing.T) {
 
 	service.PublishTweet(tweet)
 
-	publishedTweet := service.GetTweet()
+	publishedTweets := service.GetTweets()
+	publishedTweet := publishedTweets[0]
 
-	if publishedTweet.User != user || publishedTweet.Text != text {
-		t.Errorf("Expected tweet is %s: %s \n but is %s: %s",
-			user, text, publishedTweet.User, publishedTweet.Text)
-	}
-
-	if publishedTweet.Date == nil {
-		t.Error("Expected date can't be nil")
-	}
+	isValidTweet(t, publishedTweet, user, text)
 }
 
 func TestCleanTweetDeletesTweet(t *testing.T) {
@@ -35,10 +46,10 @@ func TestCleanTweetDeletesTweet(t *testing.T) {
 
 	service.PublishTweet(tweet)
 
-	service.DeleteTweet()
+	service.DeleteTweets()
 
-	if service.GetTweet() != nil {
-		t.Error("Expected tweet is '' ")
+	if len(service.GetTweets()) != 0 {
+		t.Error("No tweets expected")
 	}
 
 }
@@ -55,6 +66,10 @@ func TestTweetWithoutUserIsNotPublished(t *testing.T) {
 		t.Error("Expected error is user is required")
 	}
 
+	if service.TweetCount() != 0 {
+		t.Error("Expected number of tweets is zero")
+	}
+
 }
 
 func TestCanNotPublishTweetWithoutText(t *testing.T) {
@@ -67,6 +82,11 @@ func TestCanNotPublishTweetWithoutText(t *testing.T) {
 	if err != nil && err.Error() != "text is required" {
 		t.Error("Expected error is text is required")
 	}
+
+	if service.TweetCount() != 0 {
+		t.Error("Expected number of tweets is zero")
+	}
+
 }
 
 func TestCanNotPublishTweetsLongerThan140Characters(t *testing.T) {
@@ -80,6 +100,48 @@ func TestCanNotPublishTweetsLongerThan140Characters(t *testing.T) {
 
 	if err == nil || err.Error() != "text can not be longer than 140 characters" {
 		t.Error("Expected error is text can not be longer than 140 characters")
+	}
+
+	if service.TweetCount() != 0 {
+		t.Error("Expected number of tweets is zero")
+	}
+
+}
+
+func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
+
+	// Initialization
+	var tweet, secondTweet *domain.Tweet
+
+	user := "grupoesfera"
+	text := "This is my first tweet"
+	secondText := "This is my second tweet"
+
+	tweet = domain.NewTweet(user, text)
+	secondTweet = domain.NewTweet(user, secondText)
+
+	// Operation
+	service.PublishTweet(tweet)
+	service.PublishTweet(secondTweet)
+
+	// Validation
+	publishedTweets := service.GetTweets()
+
+	if len(publishedTweets) != 2 {
+
+		t.Errorf("Expected size is 2 but was %d", len(publishedTweets))
+		return
+	}
+
+	firstPublishedTweet := publishedTweets[0]
+	secondPublishedTweet := publishedTweets[1]
+
+	if !isValidTweet(t, firstPublishedTweet, user, text) {
+		return
+	}
+
+	if !isValidTweet(t, secondPublishedTweet, user, secondText) {
+		return
 	}
 
 }

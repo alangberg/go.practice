@@ -6,7 +6,7 @@ import (
 	"github.com/alangberg/go.tuiter/src/domain"
 )
 
-var tweet *domain.Tweet
+var tweets []*domain.Tweet
 
 func PublishTweet(newTweet *domain.Tweet) error {
 	if newTweet.User == "" {
@@ -18,14 +18,18 @@ func PublishTweet(newTweet *domain.Tweet) error {
 		return fmt.Errorf("text can not be longer than 140 characters")
 	}
 
-	tweet = newTweet
+	tweets = append(tweets, newTweet)
 	return nil
 }
 
-func GetTweet() *domain.Tweet {
-	return tweet
+func GetTweets() []*domain.Tweet {
+	return tweets
 }
 
-func DeleteTweet() {
-	tweet = nil
+func TweetCount() int {
+	return len(tweets)
+}
+
+func DeleteTweets() {
+	tweets = make([]*domain.Tweet, 0)
 }
