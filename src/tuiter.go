@@ -30,10 +30,13 @@ func main() {
 			text := c.ReadLine()
 			tweet := domain.NewTweet(user, text)
 
-			service.PublishTweet(tweet)
+			err := service.PublishTweet(tweet)
 
-			c.Print("Tweet sent. \n")
-
+			if err != nil {
+				c.Println(err.Error())
+			} else {
+				c.Println("Tweet sent.")
+			}
 			return
 		},
 	})
@@ -64,7 +67,7 @@ func main() {
 
 			service.DeleteTweet()
 
-			c.Print("Tweet Deleted.\n")
+			c.Println("Tweet Deleted.")
 
 			return
 		},
