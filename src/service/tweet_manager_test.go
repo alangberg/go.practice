@@ -3,21 +3,15 @@ package service_test
 import (
 	"testing"
 
-	"github.com/go.tuiter/src/domain"
-
-	"github.com/go.tuiter/src/service"
+	"github.com/alangberg/go.tuiter/src/domain"
+	"github.com/alangberg/go.tuiter/src/service"
 )
 
-func GetDefaultTweet() *domain.Tweet {
+func TestPublishedTweetIsSaved(t *testing.T) {
+
 	user := "grupoEsfera"
 	text := "This is my first tweet"
-
 	tweet := domain.NewTweet(user, text)
-	return tweet
-}
-
-func TestPublishedTweetIsSaved(t *testing.T) {
-	tweet := GetDefaultTweet()
 
 	service.PublishTweet(tweet)
 
@@ -43,7 +37,7 @@ func TestCleanTweetDeletesTweet(t *testing.T) {
 
 	service.DeleteTweet()
 
-	if service.GetTweet() != "" {
+	if service.GetTweet() != nil {
 		t.Error("Expected tweet is '' ")
 	}
 

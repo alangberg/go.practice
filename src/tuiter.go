@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/abiosoft/ishell"
-	"github.com/go.tuiter/src/service"
+	"github.com/alangberg/go.tuiter/src/domain"
+	"github.com/alangberg/go.tuiter/src/service"
 )
 
 func main() {
@@ -10,6 +11,10 @@ func main() {
 	shell.SetPrompt("Tuiter >> ")
 	shell.Print("Type 'help' to know commands\n")
 
+	/*	shell.Print("Hello! Please enter your username:\n")
+		defer shell.ShowPrompt(true)
+		user := shell.ReadLine()
+	*/
 	shell.AddCmd(&ishell.Cmd{
 		Name: "publishTweet",
 		Help: "Publishes a tweet",
@@ -17,9 +22,13 @@ func main() {
 
 			defer c.ShowPrompt(true)
 
+			c.Print("Please enter your username:")
+			user := c.ReadLine()
+
 			c.Print("Write your tweet:")
 
-			tweet := c.ReadLine()
+			text := c.ReadLine()
+			tweet := domain.NewTweet(user, text)
 
 			service.PublishTweet(tweet)
 

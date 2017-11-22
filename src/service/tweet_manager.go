@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/go.tuiter/src/domain"
+	"github.com/alangberg/go.tuiter/src/domain"
 )
 
 var tweet *domain.Tweet
