@@ -10,12 +10,12 @@ var tweets []*domain.Tweet
 
 func PublishTweet(newTweet *domain.Tweet) (int, error) {
 	if newTweet.User == "" {
-		return 0, fmt.Errorf("user is required")
+		return -1, fmt.Errorf("user is required")
 	}
 	if newTweet.Text == "" {
-		return 0, fmt.Errorf("text is required")
+		return -1, fmt.Errorf("text is required")
 	} else if len(newTweet.Text) > 140 {
-		return 0, fmt.Errorf("text can not be longer than 140 characters")
+		return -1, fmt.Errorf("text can not be longer than 140 characters")
 	}
 
 	tweets = append(tweets, newTweet)
