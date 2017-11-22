@@ -47,7 +47,9 @@ func main() {
 
 			tweet := service.GetTweet()
 
-			c.Println(tweet)
+			c.Println("User:", tweet.User)
+			c.Println("Tweet:", tweet.Text)
+			c.Println("Date:", tweet.Date.Format("02-01-2006 15:04:05"))
 
 			return
 		},
@@ -62,7 +64,7 @@ func main() {
 
 			service.DeleteTweet()
 
-			c.Println("Tweet Deleted.\n")
+			c.Print("Tweet Deleted.\n")
 
 			return
 		},
