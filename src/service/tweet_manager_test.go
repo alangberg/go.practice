@@ -167,3 +167,31 @@ func TestCanRetrieveTweetById(t *testing.T) {
 
 	isValidTweet(t, publishedTweet, id, user, text)
 }
+
+func TestCanCountTheTweetsSentByAnUser(t *testing.T) {
+
+	// Initialization
+	var tweet, secondTweet, thirdTweet *domain.Tweet
+
+	user := "grupoesfera"
+	anotherUser := "nick"
+	text := "This is my first tweet"
+	secondText := "This is my second tweet"
+
+	tweet = domain.NewTweet(user, text)
+	secondTweet = domain.NewTweet(user, secondText)
+	thirdTweet = domain.NewTweet(anotherUser, text)
+
+	service.PublishTweet(tweet)
+	service.PublishTweet(secondTweet)
+	service.PublishTweet(thirdTweet)
+
+	// Operation
+	count := service.CountTweetsByUser(user)
+
+	// Validation
+	if count != 2 {
+		t.Errorf("Expected count is 2 but was %d", count)
+	}
+
+}
