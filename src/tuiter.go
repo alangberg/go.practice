@@ -107,6 +107,46 @@ func main() {
 		},
 	})
 
+	shell.AddCmd(&ishell.Cmd{
+		Name: "follow",
+		Help: "us3r A follou user B",
+		Func: func(c *ishell.Context) {
+
+			defer c.ShowPrompt(true)
+
+			c.Print("Please enter a follower:")
+			follower := c.ReadLine()
+
+			c.Print("Please enter a user to follow:")
+			followed := c.ReadLine()
+
+			service.Follow(follower, followed)
+
+			c.Printf("%s is now following %s! :D \n", follower, followed)
+
+			return
+		},
+	})
+
+	shell.AddCmd(&ishell.Cmd{
+		Name: "getTimeline",
+		Help: "Count all existing tweets from a given user",
+		Func: func(c *ishell.Context) {
+
+			defer c.ShowPrompt(true)
+
+			c.Print("Please enter a username:")
+			user := c.ReadLine()
+
+			tweets := service.GetTimeline(user)
+			c.Printf("The user %s has %d tweets. \n", user, len(tweets))
+
+			printTweets(tweets, c)
+
+			return
+		},
+	})
+
 	shell.Run()
 
 }

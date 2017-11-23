@@ -2,15 +2,18 @@ package service
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/alangberg/go.tuiter/src/domain"
 )
 
 var tweetsMap map[string][]*domain.Tweet
+var followersMap map[string][]string
 var nextId int
 
 func InitializeService() {
 	tweetsMap = make(map[string][]*domain.Tweet)
+	followersMap = make(map[string][]string)
 	nextId = 0
 }
 
@@ -72,5 +75,38 @@ func TweetCount() int {
 }
 
 func DeleteTweets() {
-	InitializeService()
+	tweetsMap = make(map[string][]*domain.Tweet)
+	nextId = 0
+}
+
+func Follow(followingUser, newFollowedUser string) error {
+	if CountTweetsByUser(newFollowedUser) == -1 {
+		return fmt.Errorf("both users must exist")
+	}
+
+	followed, ok := followersMap[followingUser]
+
+	if !ok {
+		followersMap[followingUser] = make([]string, 0)
+		followed = followersMap[followingUser]
+	}
+
+	followersMap[followingUser] = append(followed, newFollowedUser)
+
+	return nil
+}
+
+func GetTimeline(user string) []*domain.Tweet {
+	timeline := make([]*domain.Tweet, 0)
+	followedUsers, ok := followersMap[user]
+
+	if !ok {
+		return nil
+	}
+
+	for _, followedUser := range followedUsers {
+		timeline = append(timeline, tweetsMap[followedUser]...)
+	}
+	sort.Slice(timeline, func(i, j int) bool { return timeline[i].Date.Before(*timeline[j].Date) })
+	return timeline
 }
