@@ -33,8 +33,7 @@ func TestPublishedTweetIsSaved(t *testing.T) {
 	var tweetId int
 	tweetId, _ = service.PublishTweet(tweet)
 
-	publishedTweets := service.GetTweets()
-	publishedTweet := publishedTweets[0]
+	publishedTweet := service.GetTweet()
 
 	isValidTweet(t, publishedTweet, tweetId, user, text)
 }
@@ -49,7 +48,7 @@ func TestCleanTweetDeletesTweet(t *testing.T) {
 
 	service.DeleteTweets()
 
-	if len(service.GetTweets()) != 0 {
+	if service.GetTweet() != nil {
 		t.Error("No tweets expected")
 	}
 
@@ -108,46 +107,6 @@ func TestCanNotPublishTweetsLongerThan140Characters(t *testing.T) {
 	}
 
 }
-
-func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
-
-	// Initialization
-	var tweet, secondTweet *domain.Tweet
-
-	user := "grupoesfera"
-	text := "This is my first tweet"
-	secondText := "This is my second tweet"
-
-	tweet = domain.NewTweet(user, text)
-	secondTweet = domain.NewTweet(user, secondText)
-
-	var firstTweetId, secondTweetId int
-	// Operation
-	firstTweetId, _ = service.PublishTweet(tweet)
-	secondTweetId, _ = service.PublishTweet(secondTweet)
-
-	// Validation
-	publishedTweets := service.GetTweets()
-
-	if len(publishedTweets) != 2 {
-
-		t.Errorf("Expected size is 2 but was %d", len(publishedTweets))
-		return
-	}
-
-	firstPublishedTweet := publishedTweets[0]
-	secondPublishedTweet := publishedTweets[1]
-
-	if !isValidTweet(t, firstPublishedTweet, firstTweetId, user, text) {
-		return
-	}
-
-	if !isValidTweet(t, secondPublishedTweet, secondTweetId, user, secondText) {
-		return
-	}
-
-}
-
 func TestCanRetrieveTweetById(t *testing.T) {
 	// Initialization
 
@@ -192,6 +151,49 @@ func TestCanCountTheTweetsSentByAnUser(t *testing.T) {
 	// Validation
 	if count != 2 {
 		t.Errorf("Expected count is 2 but was %d", count)
+	}
+
+}
+
+func TestCanRetrieveTheTweetsSentByAnUser(t *testing.T) {
+
+	// Initialization
+	service.InitializeService()
+
+	var tweet, secondTweet, thirdTweet *domain.Tweet
+
+	user := "grupoesfera"
+	anotherUser := "nick"
+	text := "This is my first tweet"
+	secondText := "This is my second tweet"
+
+	tweet = domain.NewTweet(user, text)
+	secondTweet = domain.NewTweet(user, secondText)
+	thirdTweet = domain.NewTweet(anotherUser, text)
+
+	firstId, _ := service.PublishTweet(tweet)
+	secondId, _ := service.PublishTweet(secondTweet)
+	service.PublishTweet(thirdTweet)
+
+	// Operation
+	tweets := service.GetTweetsByUser(user)
+
+	// Validation
+	if len(tweets) != 2 {
+
+		t.Errorf("Expected size is 2 but was %d", len(tweets))
+		return
+	}
+
+	firstPublishedTweet := tweets[0]
+	secondPublishedTweet := tweets[1]
+
+	if !isValidTweet(t, firstPublishedTweet, firstId, user, text) {
+		return
+	}
+
+	if !isValidTweet(t, secondPublishedTweet, secondId, user, secondText) {
+		return
 	}
 
 }

@@ -24,6 +24,7 @@ func main() {
 	shell := ishell.New()
 	shell.SetPrompt("Tuit3r >> ")
 	shell.Print("Type 'help' to know commands\n")
+	service.InitializeService()
 
 	/*	shell.Print("Hello! Please enter your username:\n")
 		defer shell.ShowPrompt(true)
@@ -62,7 +63,10 @@ func main() {
 
 			defer c.ShowPrompt(true)
 
-			tweets := service.GetTweets()
+			c.Print("Please enter a username:")
+			user := c.ReadLine()
+
+			tweets := service.GetTweetsByUser(user)
 
 			printTweets(tweets, c)
 
@@ -80,6 +84,24 @@ func main() {
 			service.DeleteTweets()
 
 			c.Println("Tweets Deleted.")
+
+			return
+		},
+	})
+
+	shell.AddCmd(&ishell.Cmd{
+		Name: "countUserTweets",
+		Help: "Count all existing tweets from a given user",
+		Func: func(c *ishell.Context) {
+
+			defer c.ShowPrompt(true)
+
+			c.Print("Please enter a username:")
+			user := c.ReadLine()
+
+			tweetCount := service.CountTweetsByUser(user)
+
+			c.Printf("The user %s has %d tweets. \n", user, tweetCount)
 
 			return
 		},

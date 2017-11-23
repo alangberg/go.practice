@@ -6,7 +6,13 @@ import (
 	"github.com/alangberg/go.tuiter/src/domain"
 )
 
-var tweets []*domain.Tweet
+var tweetsMap map[string][]*domain.Tweet
+var nextId int
+
+func InitializeService() {
+	tweetsMap = make(map[string][]*domain.Tweet)
+	nextId = 0
+}
 
 func PublishTweet(newTweet *domain.Tweet) (int, error) {
 	if newTweet.User == "" {
@@ -18,35 +24,53 @@ func PublishTweet(newTweet *domain.Tweet) (int, error) {
 		return -1, fmt.Errorf("text can not be longer than 140 characters")
 	}
 
+	tweets, ok := tweetsMap[newTweet.User]
+	if !ok {
+		tweetsMap[newTweet.User] = make([]*domain.Tweet, 0)
+		tweets = tweetsMap[newTweet.User]
+	}
 	tweets = append(tweets, newTweet)
-	tweetId := TweetCount() - 1
-	newTweet.Id = tweetId
-
-	return tweetId, nil
+	tweetsMap[newTweet.User] = tweets
+	newTweet.Id = nextId
+	nextId++
+	return newTweet.Id, nil
 }
 
 func GetTweetById(id int) *domain.Tweet {
-	return tweets[id]
+	for _, tweets := range tweetsMap {
+		for _, tweet := range tweets {
+			if tweet.Id == id {
+				return tweet
+			}
+		}
+	}
+	return nil
 }
 
-func GetTweets() []*domain.Tweet {
-	return tweets
+func GetTweetsByUser(user string) []*domain.Tweet {
+	tweets, ok := tweetsMap[user]
+	if ok {
+		return tweets
+	}
+	return nil
+}
+
+func GetTweet() *domain.Tweet {
+	return GetTweetById(nextId - 1)
 }
 
 func CountTweetsByUser(user string) int {
-	count := 0
-	for _, t := range tweets {
-		if t.User == user {
-			count++
-		}
+	tweets, ok := tweetsMap[user]
+	if ok {
+		return len(tweets)
 	}
-	return count
+	return -1
 }
 
 func TweetCount() int {
-	return len(tweets)
+	return nextId
 }
 
 func DeleteTweets() {
-	tweets = make([]*domain.Tweet, 0)
+	InitializeService()
 }
