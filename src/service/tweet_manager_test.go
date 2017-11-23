@@ -7,6 +7,22 @@ import (
 	"github.com/alangberg/go.tuiter/src/service"
 )
 
+var defUser *domain.User
+var defTweetText string
+
+func defaultUser() *domain.User {
+	return domain.NewUser("defaultUser")
+}
+
+func defaultTweetText() string {
+	return "Default tweet text"
+}
+
+func TestMain(m *testing.M) {
+	defUser = defaultUser()
+	defTweetText = defaultTweetText()
+}
+
 func TestPublishedTweetIsSaved(t *testing.T) {
 
 	// Initialization
