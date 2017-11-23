@@ -23,7 +23,7 @@ func TestPublishedTweetIsSaved(t *testing.T) {
 	id, _ := tweetManager.PublishTweet(tweet)
 
 	// Validation
-	publishedTweet := tweetManager.GetTweet()
+	publishedTweet := tweetManager.GetLatestTweet()
 
 	isValidTweet(t, publishedTweet, id, user, text)
 }

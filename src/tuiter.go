@@ -24,7 +24,8 @@ func main() {
 	shell := ishell.New()
 	shell.SetPrompt("Tuit3r >> ")
 	shell.Print("Type 'help' to know commands\n")
-	service.InitializeService()
+
+	tm := service.NewTweetManager()
 
 	/*	shell.Print("Hello! Please enter your username:\n")
 		defer shell.ShowPrompt(true)
@@ -45,7 +46,7 @@ func main() {
 			text := c.ReadLine()
 			tweet := domain.NewTweet(user, text)
 
-			_, err := service.PublishTweet(tweet)
+			_, err := tm.PublishTweet(tweet)
 
 			if err != nil {
 				c.Println(err.Error())
@@ -57,7 +58,25 @@ func main() {
 	})
 
 	shell.AddCmd(&ishell.Cmd{
-		Name: "showTweets",
+		Name: "showTweetsFromUser",
+		Help: "Shows all tweets from a user",
+		Func: func(c *ishell.Context) {
+
+			defer c.ShowPrompt(true)
+
+			c.Print("Please enter a username:")
+			user := c.ReadLine()
+
+			tweets := tm.GetTweetsByUser(user)
+
+			printTweets(tweets, c)
+
+			return
+		},
+	})
+
+	shell.AddCmd(&ishell.Cmd{
+		Name: "showallTweets",
 		Help: "Shows all tweets",
 		Func: func(c *ishell.Context) {
 
@@ -66,7 +85,7 @@ func main() {
 			c.Print("Please enter a username:")
 			user := c.ReadLine()
 
-			tweets := service.GetTweetsByUser(user)
+			tweets := tm.GetTweetsByUser(user)
 
 			printTweets(tweets, c)
 
@@ -81,7 +100,7 @@ func main() {
 
 			defer c.ShowPrompt(true)
 
-			service.DeleteTweets()
+			tm.DeleteTweets()
 
 			c.Println("Tweets Deleted.")
 
@@ -99,7 +118,7 @@ func main() {
 			c.Print("Please enter a username:")
 			user := c.ReadLine()
 
-			tweetCount := service.CountTweetsByUser(user)
+			tweetCount := tm.CountTweetsByUser(user)
 
 			c.Printf("The user %s has %d tweets. \n", user, tweetCount)
 
@@ -120,7 +139,7 @@ func main() {
 			c.Print("Please enter a user to follow:")
 			followed := c.ReadLine()
 
-			service.Follow(follower, followed)
+			tm.Follow(follower, followed)
 
 			c.Printf("%s is now following %s! :D \n", follower, followed)
 
@@ -138,8 +157,8 @@ func main() {
 			c.Print("Please enter a username:")
 			user := c.ReadLine()
 
-			tweets := service.GetTimeline(user)
-			c.Printf("The user %s has %d tweets. \n", user, len(tweets))
+			tweets := tm.GetTimeline(user)
+			c.Printf("The user %s has %d tweets in his\\her timeline. \n", user, len(tweets))
 
 			printTweets(tweets, c)
 

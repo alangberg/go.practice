@@ -7,40 +7,47 @@ import (
 	"github.com/alangberg/go.tuiter/src/domain"
 )
 
-var tweetsMap map[string][]*domain.Tweet
-var followersMap map[string][]string
-var nextId int
-
-func InitializeService() {
-	tweetsMap = make(map[string][]*domain.Tweet)
-	followersMap = make(map[string][]string)
-	nextId = 0
+type TweetManager struct {
+	TweetsMap    map[string][]*domain.Tweet
+	FollowersMap map[string][]string
+	NextId       int
 }
 
-func PublishTweet(newTweet *domain.Tweet) (int, error) {
+func NewTweetManager() TweetManager {
+	tweetManager := TweetManager{TweetsMap: make(map[string][]*domain.Tweet), FollowersMap: make(map[string][]string), NextId: 0}
+	return tweetManager
+}
+
+func (tm *TweetManager) ResetService() {
+	tm.TweetsMap = make(map[string][]*domain.Tweet)
+	tm.FollowersMap = make(map[string][]string)
+	tm.NextId = 0
+}
+
+func (tm *TweetManager) PublishTweet(newTweet *domain.Tweet) (int, error) {
 	if newTweet.User == "" {
 		return -1, fmt.Errorf("user is required")
 	}
 	if newTweet.Text == "" {
 		return -1, fmt.Errorf("text is required")
 	} else if len(newTweet.Text) > 140 {
-		return -1, fmt.Errorf("text can not be longer than 140 characters")
+		return -1, fmt.Errorf("text exceeds 140 characters")
 	}
 
-	tweets, ok := tweetsMap[newTweet.User]
+	tweets, ok := tm.TweetsMap[newTweet.User]
 	if !ok {
-		tweetsMap[newTweet.User] = make([]*domain.Tweet, 0)
-		tweets = tweetsMap[newTweet.User]
+		tm.TweetsMap[newTweet.User] = make([]*domain.Tweet, 0)
+		tweets = tm.TweetsMap[newTweet.User]
 	}
 	tweets = append(tweets, newTweet)
-	tweetsMap[newTweet.User] = tweets
-	newTweet.Id = nextId
-	nextId++
+	tm.TweetsMap[newTweet.User] = tweets
+	newTweet.Id = tm.NextId
+	tm.NextId++
 	return newTweet.Id, nil
 }
 
-func GetTweetById(id int) *domain.Tweet {
-	for _, tweets := range tweetsMap {
+func (tm *TweetManager) GetTweetById(id int) *domain.Tweet {
+	for _, tweets := range tm.TweetsMap {
 		for _, tweet := range tweets {
 			if tweet.Id == id {
 				return tweet
@@ -50,63 +57,85 @@ func GetTweetById(id int) *domain.Tweet {
 	return nil
 }
 
-func GetTweetsByUser(user string) []*domain.Tweet {
-	tweets, ok := tweetsMap[user]
+func (tm *TweetManager) GetTweetsByUser(user string) []*domain.Tweet {
+	tweets, ok := tm.TweetsMap[user]
 	if ok {
 		return tweets
 	}
 	return nil
 }
 
-func GetTweet() *domain.Tweet {
-	return GetTweetById(nextId - 1)
+func (tm *TweetManager) GetTweets() []*domain.Tweet {
+	allTweets := make([]*domain.Tweet, 0)
+	for _, tweets := range tm.TweetsMap {
+		allTweets = append(allTweets, tweets...)
+	}
+	return allTweets
 }
 
-func CountTweetsByUser(user string) int {
-	tweets, ok := tweetsMap[user]
+func (tm *TweetManager) GetLatestTweet() *domain.Tweet {
+	return tm.GetTweetById(tm.NextId - 1)
+}
+
+func (tm *TweetManager) CountTweetsByUser(user string) int {
+	tweets, ok := tm.TweetsMap[user]
 	if ok {
 		return len(tweets)
 	}
 	return -1
 }
 
-func TweetCount() int {
-	return nextId
+func (tm *TweetManager) TweetCount() int {
+	return tm.NextId
 }
 
-func DeleteTweets() {
-	tweetsMap = make(map[string][]*domain.Tweet)
-	nextId = 0
+func (tm *TweetManager) DeleteTweets() {
+	tm.TweetsMap = make(map[string][]*domain.Tweet)
+	tm.NextId = 0
 }
 
-func Follow(followingUser, newFollowedUser string) error {
-	if CountTweetsByUser(newFollowedUser) == -1 {
+func (tm *TweetManager) Follow(followingUser, newFollowedUser string) error {
+	if tm.CountTweetsByUser(newFollowedUser) == -1 {
 		return fmt.Errorf("both users must exist")
 	}
 
-	followed, ok := followersMap[followingUser]
+	followed, ok := tm.FollowersMap[followingUser]
 
 	if !ok {
-		followersMap[followingUser] = make([]string, 0)
-		followed = followersMap[followingUser]
+		tm.FollowersMap[followingUser] = make([]string, 0)
+		followed = tm.FollowersMap[followingUser]
+	} else {
+		if contains(followed, newFollowedUser) {
+			return fmt.Errorf("%s is already being followed by %s", followingUser, newFollowedUser)
+		}
+
 	}
 
-	followersMap[followingUser] = append(followed, newFollowedUser)
+	tm.FollowersMap[followingUser] = append(followed, newFollowedUser)
 
 	return nil
 }
 
-func GetTimeline(user string) []*domain.Tweet {
+func (tm *TweetManager) GetTimeline(user string) []*domain.Tweet {
 	timeline := make([]*domain.Tweet, 0)
-	followedUsers, ok := followersMap[user]
+	followedUsers, ok := tm.FollowersMap[user]
 
 	if !ok {
 		return nil
 	}
 
 	for _, followedUser := range followedUsers {
-		timeline = append(timeline, tweetsMap[followedUser]...)
+		timeline = append(timeline, tm.TweetsMap[followedUser]...)
 	}
 	sort.Slice(timeline, func(i, j int) bool { return timeline[i].Date.Before(*timeline[j].Date) })
 	return timeline
+}
+
+func contains(stringSlice []string, toFind string) bool {
+	for _, s := range stringSlice {
+		if s == toFind {
+			return true
+		}
+	}
+	return false
 }
