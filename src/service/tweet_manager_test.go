@@ -7,8 +7,10 @@ import (
 	"github.com/alangberg/go.tuiter/src/service"
 )
 
-var defUser *domain.User
+var defUser, defSecondUser *domain.User
 var defTweetText string
+var defTweet *domain.Tweet
+var tweetManager *service.TweetManager
 
 func defaultUser() *domain.User {
 	return domain.NewUser("defaultUser")
@@ -18,47 +20,48 @@ func defaultTweetText() string {
 	return "Default tweet text"
 }
 
+func defaultTweet() *domain.Tweet {
+	return &domain.Tweet{User: defaultUser(), Text: defaultTweetText()}
+}
+
 func TestMain(m *testing.M) {
+	tweetManager = service.NewTweetManager()
 	defUser = defaultUser()
 	defTweetText = defaultTweetText()
+	defTweet = defaultTweet()
+	defSecondUser = &domain.User{Username: "defSecondUser"}
+}
+
+func TestUnregisteredUserCanNotPublishTweet(t *testing.T) {
+
+	// Operation
+	_, err := tweetManager.PublishTweet(defTweet)
+
+	// Validation
+	if err == nil {
+		t.Error("Expected error is user is required")
+	}
+	if tweetManager.TweetCount() != 0 {
+		t.Error("Did not expect tweet to be pubished")
+	}
 }
 
 func TestPublishedTweetIsSaved(t *testing.T) {
 
-	// Initialization
-	tweetManager := service.NewTweetManager()
-
-	var tweet *domain.Tweet
-
-	user := "grupoesfera"
-	text := "This is my first tweet"
-
-	tweet = domain.NewTweet(user, text)
-
 	// Operation
-	id, _ := tweetManager.PublishTweet(tweet)
+	id, _ := tweetManager.PublishTweet(defTweet)
 
 	// Validation
 	publishedTweet := tweetManager.GetLatestTweet()
 
-	isValidTweet(t, publishedTweet, id, user, text)
+	isValidTweet(t, publishedTweet, id, defUser, defTweetText)
 }
 
 func TestTweetWithoutUserIsNotPublished(t *testing.T) {
 
-	// Initialization
-	tweetManager := service.NewTweetManager()
-
-	var tweet *domain.Tweet
-
-	var user string
-	text := "This is my first tweet"
-
-	tweet = domain.NewTweet(user, text)
-
 	// Operation
 	var err error
-	_, err = tweetManager.PublishTweet(tweet)
+	_, err = tweetManager.PublishTweet(defTweet)
 
 	// Validation
 	if err != nil && err.Error() != "user is required" {
@@ -68,19 +71,9 @@ func TestTweetWithoutUserIsNotPublished(t *testing.T) {
 
 func TestTweetWithoutTextIsNotPublished(t *testing.T) {
 
-	// Initialization
-	tweetManager := service.NewTweetManager()
-
-	var tweet *domain.Tweet
-
-	user := "grupoesfera"
-	var text string
-
-	tweet = domain.NewTweet(user, text)
-
 	// Operation
 	var err error
-	_, err = tweetManager.PublishTweet(tweet)
+	_, err = tweetManager.PublishTweet(defTweet)
 
 	// Validation
 	if err == nil {
@@ -95,17 +88,11 @@ func TestTweetWithoutTextIsNotPublished(t *testing.T) {
 
 func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T) {
 
-	// Initialization
-	tweetManager := service.NewTweetManager()
-
-	var tweet *domain.Tweet
-
-	user := "grupoesfera"
-	text := `The Go project has grown considerably with over half a million users and community members
+	longText := `The Go project has grown considerably with over half a million users and community members
 	   all over the world. To date all community oriented activities have been organized by the community
 	   with minimal involvement from the Go project. We greatly appreciate these efforts`
 
-	tweet = domain.NewTweet(user, text)
+	tweet := domain.NewTweet(defUser, longText)
 
 	// Operation
 	var err error
@@ -120,23 +107,20 @@ func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T) {
 	if err.Error() != "text exceeds 140 characters" {
 		t.Error("Expected error is text exceeds 140 characters")
 	}
+
+	if tweetManager.TweetCount() != 0 {
+		t.Error("Did not expect tweet to be pubished")
+	}
 }
 func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 
-	// Initialization
-	tweetManager := service.NewTweetManager()
+	secondTweetText := "This is my second tweet"
 
-	var tweet, secondTweet *domain.Tweet
-
-	user := "grupoesfera"
-	text := "This is my first tweet"
-	secondText := "This is my second tweet"
-
-	tweet = domain.NewTweet(user, text)
-	secondTweet = domain.NewTweet(user, secondText)
+	firstTweet := defTweet
+	secondTweet := domain.NewTweet(defUser, secondTweetText)
 
 	// Operation
-	firstId, _ := tweetManager.PublishTweet(tweet)
+	firstId, _ := tweetManager.PublishTweet(firstTweet)
 	secondId, _ := tweetManager.PublishTweet(secondTweet)
 
 	// Validation
@@ -151,11 +135,11 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 	firstPublishedTweet := publishedTweets[0]
 	secondPublishedTweet := publishedTweets[1]
 
-	if !isValidTweet(t, firstPublishedTweet, firstId, user, text) {
+	if !isValidTweet(t, firstPublishedTweet, firstId, defUser, defTweetText) {
 		return
 	}
 
-	if !isValidTweet(t, secondPublishedTweet, secondId, user, secondText) {
+	if !isValidTweet(t, secondPublishedTweet, secondId, defUser, secondTweetText) {
 		return
 	}
 
@@ -163,108 +147,56 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 
 func TestCanRetrieveTweetById(t *testing.T) {
 
-	// Initialization
-	tweetManager := service.NewTweetManager()
-
-	var tweet *domain.Tweet
-	var id int
-
-	user := "grupoesfera"
-	text := "This is my first tweet"
-
-	tweet = domain.NewTweet(user, text)
-
 	// Operation
-	id, _ = tweetManager.PublishTweet(tweet)
+	id, _ := tweetManager.PublishTweet(defTweet)
 
 	// Validation
 	publishedTweet := tweetManager.GetTweetById(id)
 
-	isValidTweet(t, publishedTweet, id, user, text)
-}
-
-func TestCanCountTheTweetsSentByAnUser(t *testing.T) {
-
-	// Initialization
-	tweetManager := service.NewTweetManager()
-
-	var tweet, secondTweet, thirdTweet *domain.Tweet
-
-	user := "grupoesfera"
-	anotherUser := "nick"
-	text := "This is my first tweet"
-	secondText := "This is my second tweet"
-
-	tweet = domain.NewTweet(user, text)
-	secondTweet = domain.NewTweet(user, secondText)
-	thirdTweet = domain.NewTweet(anotherUser, text)
-
-	tweetManager.PublishTweet(tweet)
-	tweetManager.PublishTweet(secondTweet)
-	tweetManager.PublishTweet(thirdTweet)
-
-	// Operation
-	count := tweetManager.CountTweetsByUser(user)
-
-	// Validation
-	if count != 2 {
-		t.Errorf("Expected count is 2 but was %d", count)
-	}
-
+	isValidTweet(t, publishedTweet, id, defUser, defTweetText)
 }
 
 func TestCanRetrieveTheTweetsSentByAnUser(t *testing.T) {
 
 	// Initialization
-	tweetManager := service.NewTweetManager()
 
-	var tweet, secondTweet, thirdTweet *domain.Tweet
+	secondTweetText := "This is my second tweet"
 
-	user := "grupoesfera"
-	anotherUser := "nick"
-	text := "This is my first tweet"
-	secondText := "This is my second tweet"
+	firstTweet := defTweet
+	secondTweet := domain.NewTweet(defUser, secondTweetText)
+	thirdTweet := domain.NewTweet(defSecondUser, secondTweetText)
 
-	tweet = domain.NewTweet(user, text)
-	secondTweet = domain.NewTweet(user, secondText)
-	thirdTweet = domain.NewTweet(anotherUser, text)
-
-	firstId, _ := tweetManager.PublishTweet(tweet)
+	firstId, _ := tweetManager.PublishTweet(firstTweet)
 	secondId, _ := tweetManager.PublishTweet(secondTweet)
 	tweetManager.PublishTweet(thirdTweet)
 
 	// Operation
-	tweets := tweetManager.GetTweetsByUser(user)
+	tweets := tweetManager.GetTweetsByUser(defUser)
 
 	// Validation
-	if len(tweets) != 2 {
-
-		t.Errorf("Expected size is 2 but was %d", len(tweets))
-		return
-	}
 
 	firstPublishedTweet := tweets[0]
 	secondPublishedTweet := tweets[1]
 
-	if !isValidTweet(t, firstPublishedTweet, firstId, user, text) {
+	if !isValidTweet(t, firstPublishedTweet, firstId, defUser, defTweetText) {
 		return
 	}
 
-	if !isValidTweet(t, secondPublishedTweet, secondId, user, secondText) {
+	if !isValidTweet(t, secondPublishedTweet, secondId, defUser, secondTweetText) {
 		return
 	}
 
 }
 
-func isValidTweet(t *testing.T, tweet *domain.Tweet, id int, user, text string) bool {
+func isValidTweet(t *testing.T, tweet *domain.Tweet, id int, user *domain.User, text string) bool {
 
 	if tweet.Id != id {
 		t.Errorf("Expected id is %v but was %v", id, tweet.Id)
 	}
 
 	if tweet.User != user && tweet.Text != text {
-		t.Errorf("Expected tweet is %s: %s \nbut is %s: %s",
-			user, text, tweet.User, tweet.Text)
+		t.Errorf("Expected tweet from %s: %s \nbut is from %s: %s",
+			user.Username, text, tweet.User.Username, tweet.Text)
 		return false
 	}
 
