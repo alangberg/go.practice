@@ -7,7 +7,7 @@ import (
 	"github.com/alangberg/go.tuiter/src/service"
 )
 
-var defUser, defSecondUser *domain.User
+var defUser, defSecondUser, defUnregisteredUser *domain.User
 var defTweetText string
 var defTweet *domain.Tweet
 var tweetManager *service.TweetManager
@@ -25,28 +25,50 @@ func defaultTweet() *domain.Tweet {
 }
 
 func TestMain(m *testing.M) {
-	tweetManager = service.NewTweetManager()
 	defUser = defaultUser()
 	defTweetText = defaultTweetText()
 	defTweet = defaultTweet()
 	defSecondUser = &domain.User{Username: "defSecondUser"}
+	defUnregisteredUser = &domain.User{Username: "defUnregisteredUser"}
+
+	m.Run()
 }
 
 func TestUnregisteredUserCanNotPublishTweet(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	// Operation
 	_, err := tweetManager.PublishTweet(defTweet)
 
 	// Validation
-	if err == nil {
-		t.Error("Expected error is user is required")
-	}
+
 	if tweetManager.TweetCount() != 0 {
-		t.Error("Did not expect tweet to be pubished")
+		t.Errorf("Did not expect tweet to be pubished")
+	}
+
+	if err == nil || err.Error() != domain.UnregisteredUserErrorMessage {
+		errorMessage := "Expected error '" + domain.UnregisteredUserErrorMessage + "'"
+		if err != nil {
+			errorMessage = errorMessage + "but was '" + err.Error() + "'"
+		}
+		t.Errorf(errorMessage)
+	}
+
+}
+
+func TestUnregisteredUserCanNotFollow(t *testing.T) {
+	tweetManager = service.NewTweetManager()
+
+	err := tweetManager.Follow(defUnregisteredUser, defUser)
+
+	// Validation
+	if err != nil || err.Error() != domain.UnregisteredUserErrorMessage {
+		t.Errorf("Expected error '%s' but was '%s'", domain.UnregisteredUserErrorMessage, err.Error())
 	}
 }
 
 func TestPublishedTweetIsSaved(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	// Operation
 	id, _ := tweetManager.PublishTweet(defTweet)
@@ -58,6 +80,7 @@ func TestPublishedTweetIsSaved(t *testing.T) {
 }
 
 func TestTweetWithoutUserIsNotPublished(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	// Operation
 	var err error
@@ -70,6 +93,7 @@ func TestTweetWithoutUserIsNotPublished(t *testing.T) {
 }
 
 func TestTweetWithoutTextIsNotPublished(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	// Operation
 	var err error
@@ -87,6 +111,7 @@ func TestTweetWithoutTextIsNotPublished(t *testing.T) {
 }
 
 func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	longText := `The Go project has grown considerably with over half a million users and community members
 	   all over the world. To date all community oriented activities have been organized by the community
@@ -113,6 +138,7 @@ func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T) {
 	}
 }
 func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	secondTweetText := "This is my second tweet"
 
@@ -146,6 +172,7 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 }
 
 func TestCanRetrieveTweetById(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	// Operation
 	id, _ := tweetManager.PublishTweet(defTweet)
@@ -157,6 +184,7 @@ func TestCanRetrieveTweetById(t *testing.T) {
 }
 
 func TestCanRetrieveTheTweetsSentByAnUser(t *testing.T) {
+	tweetManager = service.NewTweetManager()
 
 	// Initialization
 

@@ -14,6 +14,51 @@ type TweetManager struct {
 	NextId          int
 }
 
+func contains(usersSlice []*domain.User, toFind *domain.User) bool {
+	for _, u := range usersSlice {
+		if u == toFind {
+			return true
+		}
+	}
+	return false
+}
+
+func (tm *TweetManager) isRegistered(user *domain.User) bool {
+	return contains(tm.RegisteredUsers, user)
+}
+
+func (tm *TweetManager) checkValidUser(newTweet *domain.Tweet) error {
+	user := newTweet.User
+	if user == nil {
+		return fmt.Errorf(domain.EmptyUserErrorMessage)
+	}
+
+	if !tm.isRegistered(user) {
+		return fmt.Errorf(domain.UnregisteredUserErrorMessage)
+	}
+
+	return nil
+}
+
+func (tm *TweetManager) checkTweetTextIsNotEmpty(newTweet *domain.Tweet) error {
+	text := newTweet.Text
+	if text == "" {
+		return fmt.Errorf(domain.EmptyTextErrorMessage)
+	}
+
+	return nil
+}
+
+func (tm *TweetManager) checkValidTweetLenght(newTweet *domain.Tweet) error {
+	text := newTweet.Text
+	if len(text) > 140 {
+		return fmt.Errorf(domain.ExceededLenghtErrorMessage)
+	}
+
+	return nil
+
+}
+
 func NewTweetManager() *TweetManager {
 	tweetManager := TweetManager{TweetsMap: make(map[*domain.User][]*domain.Tweet), FollowersMap: make(map[*domain.User][]*domain.User), NextId: 0}
 	return &tweetManager
@@ -26,13 +71,20 @@ func (tm *TweetManager) ResetService() {
 }
 
 func (tm *TweetManager) PublishTweet(newTweet *domain.Tweet) (int, error) {
-	if newTweet.User == nil {
-		return -1, fmt.Errorf("user is required")
+
+	errValidUser := tm.checkValidUser(newTweet)
+	if errValidUser != nil {
+		return -1, errValidUser
 	}
-	if newTweet.Text == "" {
-		return -1, fmt.Errorf("text is required")
-	} else if len(newTweet.Text) > 140 {
-		return -1, fmt.Errorf("text exceeds 140 characters")
+
+	errEmptyText := tm.checkTweetTextIsNotEmpty(newTweet)
+	if errEmptyText != nil {
+		return -1, errEmptyText
+	}
+
+	errTweetTextLenght := tm.checkValidTweetLenght(newTweet)
+	if errTweetTextLenght != nil {
+		return -1, errTweetTextLenght
 	}
 
 	tweets, ok := tm.TweetsMap[newTweet.User]
@@ -130,13 +182,4 @@ func (tm *TweetManager) GetTimeline(user *domain.User) []*domain.Tweet {
 	}
 	sort.Slice(timeline, func(i, j int) bool { return timeline[i].Date.Before(*timeline[j].Date) })
 	return timeline
-}
-
-func contains(usersSlice []*domain.User, toFind *domain.User) bool {
-	for _, u := range usersSlice {
-		if u == toFind {
-			return true
-		}
-	}
-	return false
 }
