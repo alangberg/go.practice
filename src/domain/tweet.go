@@ -27,7 +27,7 @@ type ImageTweet struct {
 
 type QuoteTweet struct {
 	TextTweet
-	quote *Tweet
+	quote Tweet
 }
 
 func NewTextTweet(user *User, text string) *TextTweet {
@@ -45,7 +45,7 @@ func NewTextTweet(user *User, text string) *TextTweet {
 }
 
 func NewImageTweet(user *User, text, url string) *ImageTweet {
-	date := time.Now()
+
 	textTweet := NewTextTweet(user, text)
 
 	tweet := ImageTweet{
@@ -56,8 +56,8 @@ func NewImageTweet(user *User, text, url string) *ImageTweet {
 	return &tweet
 }
 
-func NewQuoteTweet(user *User, text string, quote *Tweet) *QuoteTweet {
-	date := time.Now()
+func NewQuoteTweet(user *User, text string, quote Tweet) *QuoteTweet {
+
 	textTweet := NewTextTweet(user, text)
 
 	tweet := QuoteTweet{
@@ -68,10 +68,78 @@ func NewQuoteTweet(user *User, text string, quote *Tweet) *QuoteTweet {
 	return &tweet
 }
 
-func (t *Tweet) PrintableTweet() string {
-	return fmt.Sprintf("@%s: %s", t.User.Username, t.Text)
+//TextTweet Methods
+
+func (t *TextTweet) GetUser() *User {
+	return t.user
 }
 
-func (t *Tweet) String() string {
+func (t *TextTweet) GetText() string {
+	return t.text
+}
+func (t *TextTweet) GetId() int {
+	return t.id
+}
+
+func (t *TextTweet) SetId(newId int) {
+	t.id = newId
+}
+
+func (t *TextTweet) PrintableTweet() string {
+	return fmt.Sprintf("@%s: %s", t.user.Username, t.text)
+}
+
+func (t *TextTweet) String() string {
+	return t.PrintableTweet()
+}
+
+//ImageTweet Methods
+
+func (t *ImageTweet) GetUser() *User {
+	return t.user
+}
+
+func (t *ImageTweet) GetText() string {
+	return t.text
+}
+func (t *ImageTweet) GetId() int {
+	return t.id
+}
+
+func (t *ImageTweet) SetId(newId int) {
+	t.id = newId
+}
+
+func (t *ImageTweet) PrintableTweet() string {
+	return fmt.Sprintf("@%s: %s \n %s", t.user.Username, t.text, t.url)
+}
+
+func (t *ImageTweet) String() string {
+	return t.PrintableTweet()
+}
+
+//QuoteTweet Methods
+
+func (t *QuoteTweet) GetUser() *User {
+	return t.user
+}
+
+func (t *QuoteTweet) GetText() string {
+	return t.text
+}
+func (t *QuoteTweet) GetId() int {
+	return t.id
+}
+
+func (t *QuoteTweet) SetId(newId int) {
+	t.id = newId
+}
+
+func (t *QuoteTweet) PrintableTweet() string {
+	quote := (t.quote).PrintableTweet()
+	return fmt.Sprintf("@%s: %s \n Quote: '%s'", t.user.Username, t.text, quote)
+}
+
+func (t *QuoteTweet) String() string {
 	return t.PrintableTweet()
 }
