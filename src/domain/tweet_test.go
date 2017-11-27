@@ -93,33 +93,16 @@ func TestImageTweetPrintsUserTextAndImageURL(t *testing.T) {
 func TestQuoteTweetPrintsUserTextAndQuotedTweet(t *testing.T) {
 
 	// Initialization
-	tweet := domain.NewQuoteTweet("nick", "Awesome", quotedTweet)
+	tweet := defQuotedTweet
 
 	// Operation
 	text := tweet.PrintableTweet()
 
 	// Validation
-	expectedText := `@nick: Awesome "@grupoesfera: This is my tweet"`
+	expectedQuoteText := defTweetQuote.PrintableTweet()
+	expectedText := fmt.Sprintf("@%s: %s \n Quote: '%s'", defUser.Username, defTweetText, expectedQuoteText)
 	if text != expectedText {
 		t.Errorf("The expected text is %s but was %s", expectedText, text)
 	}
 
 }
-
-/*
-func TestCanGetAStringFromATweet(t *testing.T) {
-
-	// Initialization
-	tweet := domain.NewTextTweet("grupoesfera", "This is my tweet")
-
-	// Operation
-	text := tweet.String()
-
-	// Validation
-	expectedText := "@grupoesfera: This is my tweet"
-	if text != expectedText {
-		t.Errorf("The expected text is %s but was %s", expectedText, text)
-	}
-
-}
-*/

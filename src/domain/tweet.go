@@ -6,11 +6,12 @@ import (
 )
 
 type Tweet interface {
-	GetUser()
-	GetText()
-	GetId()
-	SetId()
-	PrintableTweet()
+	GetUser() *User
+	GetText() string
+	GetId() int
+	GetDate() *time.Time
+	SetId(id int)
+	PrintableTweet() string
 }
 
 type TextTweet struct {
@@ -81,6 +82,10 @@ func (t *TextTweet) GetId() int {
 	return t.id
 }
 
+func (t *TextTweet) GetDate() *time.Time {
+	return t.date
+}
+
 func (t *TextTweet) SetId(newId int) {
 	t.id = newId
 }
@@ -106,6 +111,10 @@ func (t *ImageTweet) GetId() int {
 	return t.id
 }
 
+func (t *ImageTweet) GetDate() *time.Time {
+	return t.date
+}
+
 func (t *ImageTweet) SetId(newId int) {
 	t.id = newId
 }
@@ -129,6 +138,10 @@ func (t *QuoteTweet) GetText() string {
 }
 func (t *QuoteTweet) GetId() int {
 	return t.id
+}
+
+func (t *QuoteTweet) GetDate() *time.Time {
+	return t.date
 }
 
 func (t *QuoteTweet) SetId(newId int) {

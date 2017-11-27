@@ -9,7 +9,7 @@ import (
 
 var defUser, defSecondUser, defUnregisteredUser *domain.User
 var defTweetText string
-var defTweet *domain.Tweet
+var defTweet domain.Tweet
 var tweetManager *service.TweetManager
 
 func defaultUser() *domain.User {
@@ -20,14 +20,14 @@ func defaultTweetText() string {
 	return "Default tweet text"
 }
 
-func defaultTweet() *domain.Tweet {
-	return domain.NewTweet(defaultUser(), defaultTweetText())
+func defaultTextTweet() domain.Tweet {
+	return domain.NewTextTweet(defaultUser(), defaultTweetText())
 }
 
 func TestMain(m *testing.M) {
 	defUser = defaultUser()
 	defTweetText = defaultTweetText()
-	defTweet = defaultTweet()
+	defTweet = defaultTextTweet()
 	defSecondUser = &domain.User{Username: "defSecondUser"}
 	defUnregisteredUser = &domain.User{Username: "defUnregisteredUser"}
 
@@ -100,7 +100,7 @@ func TestTweetWithoutTextIsNotPublished(t *testing.T) {
 	tweetManager = service.NewTweetManager()
 	tweetManager.RegisterUser(defUser)
 
-	emptyTweet := domain.NewTweet(defUser, "")
+	emptyTweet := domain.NewTextTweet(defUser, "")
 
 	// Operation
 	var err error
@@ -124,7 +124,7 @@ func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T) {
 	   all over the world. To date all community oriented activities have been organized by the community
 	   with minimal involvement from the Go project. We greatly appreciate these efforts`
 
-	tweet := domain.NewTweet(defUser, longText)
+	tweet := domain.NewTextTweet(defUser, longText)
 
 	// Operation
 	var err error
@@ -150,7 +150,7 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 	secondTweetText := "This is my second tweet"
 
 	firstTweet := defTweet
-	secondTweet := domain.NewTweet(defUser, secondTweetText)
+	secondTweet := domain.NewTextTweet(defUser, secondTweetText)
 
 	// Operation
 	firstId, _ := tweetManager.PublishTweet(firstTweet)
@@ -199,8 +199,8 @@ func TestCanRetrieveTheTweetsSentByAnUser(t *testing.T) {
 	secondTweetText := "This is my second tweet"
 
 	firstTweet := defTweet
-	secondTweet := domain.NewTweet(defUser, secondTweetText)
-	thirdTweet := domain.NewTweet(defSecondUser, secondTweetText)
+	secondTweet := domain.NewTextTweet(defUser, secondTweetText)
+	thirdTweet := domain.NewTextTweet(defSecondUser, secondTweetText)
 
 	firstId, _ := tweetManager.PublishTweet(firstTweet)
 	secondId, _ := tweetManager.PublishTweet(secondTweet)
@@ -224,19 +224,19 @@ func TestCanRetrieveTheTweetsSentByAnUser(t *testing.T) {
 
 }
 
-func isValidTweet(t *testing.T, tweet *domain.Tweet, id int, user *domain.User, text string) bool {
+func isValidTweet(t *testing.T, tweet domain.Tweet, id int, user *domain.User, text string) bool {
 
-	if tweet.Id != id {
-		t.Errorf("Expected id is %v but was %v", id, tweet.Id)
+	if tweet.GetId() != id {
+		t.Errorf("Expected id is %v but was %v", id, tweet.GetId())
 	}
 
-	if tweet.User != user && tweet.Text != text {
+	if tweet.GetUser() != user && tweet.GetText() != text {
 		t.Errorf("Expected tweet from %s: %s \nbut is from %s: %s",
-			user.Username, text, tweet.User.Username, tweet.Text)
+			user.Username, text, tweet.GetUser().Username, tweet.GetText())
 		return false
 	}
 
-	if tweet.Date == nil {
+	if tweet.GetDate() == nil {
 		t.Error("Expected date can't be nil")
 		return false
 	}
