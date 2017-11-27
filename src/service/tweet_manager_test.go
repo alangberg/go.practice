@@ -244,3 +244,18 @@ func isValidTweet(t *testing.T, tweet domain.Tweet, id int, user *domain.User, t
 	return true
 
 }
+
+func TestPluginsHaveNoErrors(t *testing.T) {
+	tweetManager = service.NewTweetManager()
+	fbPlugin := &service.FacebookPlugin{}
+
+	tweetManager.AddPlugin(fbPlugin)
+
+	// Operation
+	_, err := tweetManager.PublishTweet(defTweet)
+
+	// Validation
+	if err != nil && err.Error() != "Plugin error" {
+		t.Error("Expected error is user is required")
+	}
+}

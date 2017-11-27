@@ -13,10 +13,11 @@ type TweetManager struct {
 	FollowersMap    map[string][]*domain.User
 	TrendsMap       map[string]int
 	RegisteredUsers []*domain.User
+	TweetPlugins    []domain.TweetPlugin
 	NextId          int
 }
 
-func contains(usersSlice []*domain.User, toFind *domain.User) bool {
+func containsUser(usersSlice []*domain.User, toFind *domain.User) bool {
 	for _, u := range usersSlice {
 		if u.Username == toFind.Username {
 			return true
@@ -25,8 +26,17 @@ func contains(usersSlice []*domain.User, toFind *domain.User) bool {
 	return false
 }
 
+func containsPlugin(pluginsSlice []domain.TweetPlugin, toFind domain.TweetPlugin) bool {
+	for _, p := range pluginsSlice {
+		if p.GetPluginName() == toFind.GetPluginName() {
+			return true
+		}
+	}
+	return false
+}
+
 func (tm *TweetManager) isRegistered(user *domain.User) bool {
-	return contains(tm.RegisteredUsers, user)
+	return containsUser(tm.RegisteredUsers, user)
 }
 
 func (tm *TweetManager) checkValidUser(newTweet domain.Tweet) error {
@@ -77,6 +87,12 @@ func (tm *TweetManager) ResetService() {
 	tm.NextId = 0
 }
 
+func (tm *TweetManager) AddPlugin(newPlugin domain.TweetPlugin) {
+	if !containsPlugin(tm.TweetPlugins, newPlugin) {
+		tm.TweetPlugins = append(tm.TweetPlugins, newPlugin)
+	}
+}
+
 func (tm *TweetManager) RegisterUser(newUser *domain.User) {
 	if !tm.isRegistered(newUser) {
 		tm.RegisteredUsers = append(tm.RegisteredUsers, newUser)
@@ -121,6 +137,16 @@ func (tm *TweetManager) GetTrendingTopics() []string {
 
 }
 
+func (tm *TweetManager) runPlugins() error {
+	for _, plugin := range tm.TweetPlugins {
+		error := plugin.RunPlugin()
+		if error != nil {
+			return error
+		}
+	}
+	return nil
+}
+
 func (tm *TweetManager) PublishTweet(newTweet domain.Tweet) (int, error) {
 
 	errValidUser := tm.checkValidUser(newTweet)
@@ -149,6 +175,12 @@ func (tm *TweetManager) PublishTweet(newTweet domain.Tweet) (int, error) {
 	tm.NextId++
 
 	tm.updateTrends(newTweet)
+
+	err := tm.runPlugins()
+
+	if err != nil {
+		return -1, err
+	}
 
 	return newTweet.GetId(), nil
 }
@@ -216,7 +248,7 @@ func (tm *TweetManager) Follow(followingUser, newFollowedUser *domain.User) erro
 		tm.FollowersMap[followingUser.Username] = make([]*domain.User, 0)
 		followed = tm.FollowersMap[followingUser.Username]
 	} else {
-		if contains(followed, newFollowedUser) {
+		if containsUser(followed, newFollowedUser) {
 			return fmt.Errorf(domain.AlreadyFollowingErrorMessage)
 		}
 
