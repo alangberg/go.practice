@@ -9,30 +9,13 @@ import (
 )
 
 type TweetManager struct {
-	TweetsMap       map[string][]domain.Tweet
-	FollowersMap    map[string][]*domain.User
-	TrendsMap       map[string]int
-	RegisteredUsers []*domain.User
-	TweetPlugins    []domain.TweetPlugin
-	NextId          int
-}
-
-func containsUser(usersSlice []*domain.User, toFind *domain.User) bool {
-	for _, u := range usersSlice {
-		if u.Username == toFind.Username {
-			return true
-		}
-	}
-	return false
-}
-
-func containsPlugin(pluginsSlice []domain.TweetPlugin, toFind domain.TweetPlugin) bool {
-	for _, p := range pluginsSlice {
-		if p.GetPluginName() == toFind.GetPluginName() {
-			return true
-		}
-	}
-	return false
+	TweetsMap          map[string][]domain.Tweet
+	FollowersMap       map[string][]*domain.User
+	TrendsMap          map[string]int
+	RegisteredUsers    []*domain.User
+	TweetPlugins       []domain.TweetPlugin
+	ChannelTweetWriter *ChannelTweetWriter
+	NextId             int
 }
 
 func (tm *TweetManager) isRegistered(user *domain.User) bool {
@@ -71,12 +54,23 @@ func (tm *TweetManager) checkValidTweetLenght(newTweet domain.Tweet) error {
 
 }
 
-func NewTweetManager() *TweetManager {
+func NewTweetManager(writerType string) *TweetManager {
+	var tweetWriter domain.TweetWriter
+	if writerType == "memory" {
+		tweetWriter = NewMemoryTweetWriter()
+	} else if writerType == "file" {
+		tweetWriter = NewFileTweetWriter()
+	} else {
+		fmt.Println("Invalid tweet writer type")
+		return nil
+	}
+
 	tweetManager := TweetManager{
-		TweetsMap:    make(map[string][]domain.Tweet),
-		FollowersMap: make(map[string][]*domain.User),
-		TrendsMap:    make(map[string]int),
-		NextId:       0,
+		TweetsMap:          make(map[string][]domain.Tweet),
+		FollowersMap:       make(map[string][]*domain.User),
+		TrendsMap:          make(map[string]int),
+		ChannelTweetWriter: NewChannelTweetWriter(tweetWriter),
+		NextId:             0,
 	}
 	return &tweetManager
 }
@@ -181,6 +175,15 @@ func (tm *TweetManager) PublishTweet(newTweet domain.Tweet) (int, error) {
 	if err != nil {
 		return -1, err
 	}
+
+	tweetsToPublish := make(chan domain.Tweet)
+	quit := make(chan bool)
+	go tm.ChannelTweetWriter.WriteTweet(tweetsToPublish, quit)
+
+	tweetsToPublish <- newTweet
+	//Do a lot of things
+	close(tweetsToPublish)
+	<-quit
 
 	return newTweet.GetId(), nil
 }

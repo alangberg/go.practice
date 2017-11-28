@@ -100,59 +100,13 @@ func (t *TextTweet) String() string {
 
 //ImageTweet Methods
 
-func (t *ImageTweet) GetUser() *User {
-	return t.user
-}
-
-func (t *ImageTweet) GetText() string {
-	return t.text
-}
-func (t *ImageTweet) GetId() int {
-	return t.id
-}
-
-func (t *ImageTweet) GetDate() *time.Time {
-	return t.date
-}
-
-func (t *ImageTweet) SetId(newId int) {
-	t.id = newId
-}
-
 func (t *ImageTweet) PrintableTweet() string {
 	return fmt.Sprintf("@%s: %s \n %s", t.user.Username, t.text, t.url)
 }
 
-func (t *ImageTweet) String() string {
-	return t.PrintableTweet()
-}
-
 //QuoteTweet Methods
-
-func (t *QuoteTweet) GetUser() *User {
-	return t.user
-}
-
-func (t *QuoteTweet) GetText() string {
-	return t.text
-}
-func (t *QuoteTweet) GetId() int {
-	return t.id
-}
-
-func (t *QuoteTweet) GetDate() *time.Time {
-	return t.date
-}
-
-func (t *QuoteTweet) SetId(newId int) {
-	t.id = newId
-}
 
 func (t *QuoteTweet) PrintableTweet() string {
 	quote := (t.quote).PrintableTweet()
 	return fmt.Sprintf("@%s: %s \n Quote: '%s'", t.user.Username, t.text, quote)
-}
-
-func (t *QuoteTweet) String() string {
-	return t.PrintableTweet()
 }

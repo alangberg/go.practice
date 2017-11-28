@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestUnregisteredUserCanNotPublishTweet(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 
 	// Operation
 	_, err := tweetManager.PublishTweet(defTweet)
@@ -57,7 +57,7 @@ func TestUnregisteredUserCanNotPublishTweet(t *testing.T) {
 }
 
 func TestUnregisteredUserCanNotFollow(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 
 	err := tweetManager.Follow(defUnregisteredUser, defUser)
 
@@ -72,7 +72,7 @@ func TestUnregisteredUserCanNotFollow(t *testing.T) {
 }
 
 func TestPublishedTweetIsSaved(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	tweetManager.RegisterUser(defUser)
 	// Operation
 	id, _ := tweetManager.PublishTweet(defTweet)
@@ -84,7 +84,7 @@ func TestPublishedTweetIsSaved(t *testing.T) {
 }
 
 func TestTweetWithoutUserIsNotPublished(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	tweetManager.RegisterUser(defUser)
 	// Operation
 	var err error
@@ -97,7 +97,7 @@ func TestTweetWithoutUserIsNotPublished(t *testing.T) {
 }
 
 func TestTweetWithoutTextIsNotPublished(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	tweetManager.RegisterUser(defUser)
 
 	emptyTweet := domain.NewTextTweet(defUser, "")
@@ -118,7 +118,7 @@ func TestTweetWithoutTextIsNotPublished(t *testing.T) {
 }
 
 func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	tweetManager.RegisterUser(defUser)
 	longText := `The Go project has grown considerably with over half a million users and community members
 	   all over the world. To date all community oriented activities have been organized by the community
@@ -145,7 +145,7 @@ func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T) {
 	}
 }
 func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	tweetManager.RegisterUser(defUser)
 	secondTweetText := "This is my second tweet"
 
@@ -179,7 +179,7 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T) {
 }
 
 func TestCanRetrieveTweetById(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	tweetManager.RegisterUser(defUser)
 	// Operation
 	id, _ := tweetManager.PublishTweet(defTweet)
@@ -191,7 +191,7 @@ func TestCanRetrieveTweetById(t *testing.T) {
 }
 
 func TestCanRetrieveTheTweetsSentByAnUser(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	tweetManager.RegisterUser(defUser)
 	tweetManager.RegisterUser(defSecondUser)
 	// Initialization
@@ -246,7 +246,7 @@ func isValidTweet(t *testing.T, tweet domain.Tweet, id int, user *domain.User, t
 }
 
 func TestPluginsHaveNoErrors(t *testing.T) {
-	tweetManager = service.NewTweetManager()
+	tweetManager = service.NewTweetManager("memory")
 	fbPlugin := &service.FacebookPlugin{}
 
 	tweetManager.AddPlugin(fbPlugin)
