@@ -3,29 +3,34 @@ package main
 import (
 	"github.com/abiosoft/ishell"
 	"github.com/alangberg/go.tuiter/src/domain"
+	"github.com/alangberg/go.tuiter/src/rest"
 	"github.com/alangberg/go.tuiter/src/service"
 )
 
-func printTweets(tweets []*domain.Tweet, c *ishell.Context) {
+func printTweets(tweets []domain.Tweet, c *ishell.Context) {
 	if len(tweets) == 0 {
 		c.Println("No tweets to show :(")
 	} else {
 		for i := 0; i < len(tweets); i++ {
-			c.Println("Tweet ID:", tweets[i].Id)
-			c.Println("User:", tweets[i].User)
-			c.Println("Content:", tweets[i].Text)
-			c.Println("Date:", tweets[i].Date.Format("02-01-2006 15:04:05"))
+			c.Println("Tweet ID:", tweets[i].GetId())
+			c.Println("User:", tweets[i].GetUser().Username)
+			c.Println("Content:", tweets[i].GetText())
+			c.Println("Date:", tweets[i].GetDate().Format("02-01-2006 15:04:05"))
 			c.Println()
 		}
 	}
 }
 
 func main() {
+
 	shell := ishell.New()
 	shell.SetPrompt("Tuit3r >> ")
 	shell.Print("Type 'help' to know commands\n")
 
-	tm := service.NewTweetManager()
+	tm := service.NewTweetManager("file")
+
+	ginServer := rest.NewGinServer(tm)
+	ginServer.StartGinServer()
 
 	/*	shell.Print("Hello! Please enter your username:\n")
 		defer shell.ShowPrompt(true)
@@ -39,12 +44,12 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			c.Print("Please enter your username:")
-			user := c.ReadLine()
-
+			username := c.ReadLine()
+			user := domain.NewUser(username)
 			c.Print("Write your tweet:")
 
 			text := c.ReadLine()
-			tweet := domain.NewTweet(user, text)
+			tweet := domain.NewTextTweet(user, text)
 
 			_, err := tm.PublishTweet(tweet)
 
@@ -65,7 +70,8 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			c.Print("Please enter a username:")
-			user := c.ReadLine()
+			username := c.ReadLine()
+			user := domain.NewUser(username)
 
 			tweets := tm.GetTweetsByUser(user)
 
@@ -76,16 +82,13 @@ func main() {
 	})
 
 	shell.AddCmd(&ishell.Cmd{
-		Name: "showallTweets",
+		Name: "showTweets",
 		Help: "Shows all tweets",
 		Func: func(c *ishell.Context) {
 
 			defer c.ShowPrompt(true)
 
-			c.Print("Please enter a username:")
-			user := c.ReadLine()
-
-			tweets := tm.GetTweetsByUser(user)
+			tweets := tm.GetTweets()
 
 			printTweets(tweets, c)
 
@@ -116,11 +119,12 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			c.Print("Please enter a username:")
-			user := c.ReadLine()
 
+			username := c.ReadLine()
+			user := domain.NewUser(username)
 			tweetCount := tm.CountTweetsByUser(user)
 
-			c.Printf("The user %s has %d tweets. \n", user, tweetCount)
+			c.Printf("The user %s has %d tweets. \n", user.Username, tweetCount)
 
 			return
 		},
@@ -134,14 +138,15 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			c.Print("Please enter a follower:")
-			follower := c.ReadLine()
-
+			followerUsername := c.ReadLine()
+			follower := domain.NewUser(followerUsername)
 			c.Print("Please enter a user to follow:")
-			followed := c.ReadLine()
+			followedUsername := c.ReadLine()
+			followed := domain.NewUser(followedUsername)
 
 			tm.Follow(follower, followed)
 
-			c.Printf("%s is now following %s! :D \n", follower, followed)
+			c.Printf("%s is now following %s! :D \n", follower.Username, followed.Username)
 
 			return
 		},
@@ -155,12 +160,32 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			c.Print("Please enter a username:")
-			user := c.ReadLine()
+			username := c.ReadLine()
+			user := domain.NewUser(username)
 
 			tweets := tm.GetTimeline(user)
-			c.Printf("The user %s has %d tweets in his\\her timeline. \n", user, len(tweets))
+			c.Printf("The user %s has %d tweets in his\\her timeline. \n", user.Username, len(tweets))
 
 			printTweets(tweets, c)
+
+			return
+		},
+	})
+
+	shell.AddCmd(&ishell.Cmd{
+		Name: "registerUser",
+		Help: "Register a new us3r",
+		Func: func(c *ishell.Context) {
+
+			defer c.ShowPrompt(true)
+
+			c.Print("Username:")
+			newUsername := c.ReadLine()
+			newUser := domain.NewUser(newUsername)
+
+			tm.RegisterUser(newUser)
+
+			c.Printf("Welcome %s! \n", newUsername)
 
 			return
 		},
