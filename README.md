@@ -1,4 +1,5 @@
 ## go.tuiter
  :chicken: :chicken: :chicken: :chicken: :chicken: :chicken: :chicken: :chicken: :chicken: :chicken: :chicken: :chicken:
 # ToDo List:
-* ganarle a twitter en 6 dias :ok_hand:
+* surpass twitter in six days :ok_hand:
+* use of gin-gonic HTTP web framework
